@@ -38,7 +38,7 @@ const parseInvoiceFromText = async (req, res) => {
         `;
 
         const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash",
+            model: "gemini-2.5-flash-lite",
             contents: prompt,
         });
 
@@ -144,8 +144,11 @@ const getDashboardSummary = async (req, res) => {
 
         
         const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash",
+            model: "gemini-2.5-flash-lite",
             contents: [{ role: 'user', parts: [{ text: prompt }] }],
+            generattionConfig: {
+                temperature:0.0,
+            }
         });
 
         const responseText = response.text;
@@ -160,3 +163,8 @@ const getDashboardSummary = async (req, res) => {
 };
 
 module.exports = { parseInvoiceFromText, generateReminderEmail, getDashboardSummary };
+
+
+
+
+
