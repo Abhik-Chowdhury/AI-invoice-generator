@@ -3,6 +3,18 @@ const Invoice = require("../models/Invoice");
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
+// warnning message for status 429
+const isRateLimitError = (error) => {
+    return (
+        error?.status === 429 ||
+        error?.code === 429 ||
+        error?.message?.includes("429") ||
+        error?.message?.toLowerCase().includes("resource_exhausted") ||
+        error?.message?.toLowerCase().includes("quota")
+    );
+};
+
+
 const parseInvoiceFromText = async (req, res) => {
     const { text } = req.body;
 
@@ -60,6 +72,12 @@ const parseInvoiceFromText = async (req, res) => {
         res.status(200).json(parsedData);
     } catch (error) {
         console.error("Error parsing invoice with AI:", error);
+
+        if (isRateLimitError(error)) {
+        return res.status(429).json({message: "AI usage limit exceeded",details: error.message});
+    }
+
+
         res.status(500).json({ message: "Failed to parse invoice data from text.", details: error.message });
     }
 };
@@ -98,6 +116,11 @@ const generateReminderEmail = async (req, res) => {
         res.status(200).json({ reminderText: response.text });
     } catch (error) {
         console.error("Error generating remainder email with AI:", error);
+
+        if (isRateLimitError(error)) {
+        return res.status(429).json({message: "AI usage limit exceeded",details: error.message});
+    }
+
         res.status(500).json({ message: "Failed to parse invoice data from text.", details: error.message });
     }
 };
@@ -158,6 +181,9 @@ const getDashboardSummary = async (req, res) => {
         res.status(200).json(parsedData);
     } catch (error) {
         console.error("Error dashboard summary with AI:", error);
+        if (isRateLimitError(error)) {
+        return res.status(429).json({message: "AI usage limit exceeded",details: error.message});
+    }
         res.status(500).json({ message: "Failed to parse invoice data from text.", details: error.message });
     }
 };

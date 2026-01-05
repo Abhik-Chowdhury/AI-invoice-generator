@@ -22,6 +22,7 @@ const userSchema = new mongoose.Schema(
         businessName: { type: String, default: ''},
         address: { type: String, default: '' },
         phone: { type: String, default: '' },
+        businessLogo: {type: String, default: ''},
     },
     { timestamps: true }
 );

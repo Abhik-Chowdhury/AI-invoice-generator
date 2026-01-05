@@ -62,6 +62,7 @@ exports.loginUser = async (req, res) => {
                 businessName: user.businessName || "",
                 address: user.address || "",
                 phone: user.phone || "",
+                businessLogo: user.businessLogo || "",
             });
         } else {
             res.status(401).json({ message: "Invalid credentials"});
@@ -87,6 +88,7 @@ exports.getMe = async (req, res) => {
             businessName: user.businessName || "",
             address: user.address || "",
             phone: user.phone || "",
+            businessLogo: user.businessLogo || "",
 
         });
     } catch (error) {
@@ -106,6 +108,7 @@ exports.updateUserProfile = async (req, res) => {
             user.businessName = req.body.businessName || user.businessName;
             user.address = req.body.address || user.address;
             user.phone = req.body.phone || user.phone;
+            user.businessLogo = req.body.businessLogo || user.businessLogo;
 
             const updatedUser = await user.save();
 
@@ -114,8 +117,9 @@ exports.updateUserProfile = async (req, res) => {
                 name: updatedUser.name,
                 email: updatedUser.email,
                 businessName: updatedUser.businessName,
-                address: user.address,
+                address: updatedUser.address,
                 phone: updatedUser.phone,
+                businessLogo: updatedUser.businessLogo,
             });
         } else {
             res.status(404).json({ message: "User not found" });
