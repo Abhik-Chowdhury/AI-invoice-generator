@@ -13,38 +13,45 @@ const ReminderModal = ({ isOpen, onClose, invoiceId }) => {
   const [reminderText, setReminderText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [hasCopied, setHasCopied] = useState(false);
-  
+
 
   useEffect(() => {
-  if (!isOpen && !invoiceId) return; 
+    if (!isOpen || !invoiceId) return;
 
-  const generateReminder = async () => {
-    setIsLoading(true);
-    setReminderText('');
+    const generateReminder = async () => {
+      setIsLoading(true);
+      setReminderText('');
 
-    try {
-      const response = await axiosInstance.post(
-        API_PATHS.AI.GENERATE_REMINDER,
-        { invoiceId }
-      );
+      try {
+        const response = await axiosInstance.post(
+          API_PATHS.AI.GENERATE_REMINDER,
+          { invoiceId }
+        );
 
-      // console.log('INVOICE ID USED:', invoiceId);
-      // console.log('API RESPONSE:', response.data);
+        // console.log('INVOICE ID USED:', invoiceId);
+        // console.log('API RESPONSE:', response.data);
 
-      setReminderText(response.data.reminderText);
-    } catch (error) {
-      toast.error('Failed to generate reminder.');
-      console.error(error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+        setReminderText(response.data.reminderText);
+      } catch (error) {
+        console.error(error);
+        if (error.response?.status === 429) {
+          toast.error(
+            error.response?.data?.message ||
+            'AI limit reached. Please try again later.'
+          );
+        } else {
+          toast.error('Failed to generate reminder.');
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  generateReminder();
-}, [isOpen, invoiceId]); 
+    generateReminder();
+  }, [isOpen, invoiceId]);
 
 
-if (!isOpen) return null;
+  if (!isOpen) return null;
 
   const handleCopyToClipboard = () => {
     navigator.clipboard.writeText(reminderText);

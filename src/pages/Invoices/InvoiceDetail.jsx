@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 import CreateInvoice from './CreateInvoice';
 import Button from "../../components/ui/Button";
 import ReminderModal from "../../components/invoices/ReminderModal";
+import { useAuth } from "../../context/AuthContext";
 
 const InvoiceDetail = () => {
 
@@ -18,6 +19,8 @@ const InvoiceDetail = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [isReminderModalOpen, setIsReminderModalOpen] = useState(false);
   const invoiceRef = useRef();
+  const { user } = useAuth();
+  const businessLogo = user?.businessLogo;
 
   useEffect(() => {
     const fetchInvoice = async () => {
@@ -76,7 +79,13 @@ const InvoiceDetail = () => {
   }
   return (
     <>
-      <ReminderModal isOpen={isReminderModalOpen} onClose={() => setIsReminderModalOpen(false)} invoiceId={id} />
+      {isReminderModalOpen && (
+        <ReminderModal
+          isOpen={isReminderModalOpen}
+          onClose={() => setIsReminderModalOpen(false)}
+          invoiceId={id}
+        />
+      )}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 print:hidden">
         <h1 className="text-2xl font-semibold text-slate-900 mb-4 sm:mb-0">
           Invoice <span className="font-mono text-slate-500">{invoice.invoiceNumber}</span>
@@ -100,8 +109,19 @@ const InvoiceDetail = () => {
         >
           <div className="flex flex-col sm:flex-row justify-between items-start pb-8 border-b border-slate-200">
             <div>
-              <h2 className="text-3xl font-bold text-slate-900">INVOICE</h2>
-              <p className="text-sm text-slate-500 mt-2"># {invoice.invoiceNumber}</p>
+              <div className="flex flex-col gap-2">
+                {/* Business Logo – renders ONLY if exists */}
+                {businessLogo && businessLogo.trim() !== "" && (
+                  <img
+                    src={businessLogo}
+                    alt="Business Logo"
+                    className="p-0 max-w-50 max-h-30 object-contain"
+                  />
+                )}
+
+                <h2 className="text-3xl font-bold text-slate-900">INVOICE</h2>
+                <p className="text-sm text-slate-500 mt-2"># {invoice.invoiceNumber}</p>
+              </div>
             </div>
             <div className="text-left sm:text-right mt-4 sm:mt-0">
               <p className="text-sm text-slate-500">Status</p>

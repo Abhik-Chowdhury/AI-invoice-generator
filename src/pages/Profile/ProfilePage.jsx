@@ -6,15 +6,18 @@ import { API_PATHS } from '../../utils/apiPaths';
 import toast from 'react-hot-toast';
 import InputField from '../../components/ui/InputField';
 import TextareaField from '../../components/ui/TextareaField';
+import LogoUpload from '../../components/ui/LogoUpload';
 
 const ProfilePage = () => {
   const { user, loading, updateUser } = useAuth();
   const [isUpdating, setIsUpdating] = useState(false);
+  const [logoPreview, setLogoPreview] = useState("");
   const [formData, setFormData] = useState({
     name: '',
     businessName: '',
     address: '',
     phone: '',
+    businessLogo: '',
   });
 
   useEffect(() => {
@@ -24,9 +27,59 @@ const ProfilePage = () => {
         businessName: user.businessName || '',
         address: user.address || '',
         phone: user.phone || '',
+        businessLogo: user.businessLogo || '',
       });
     }
   }, [user]);
+
+  const MAX_SIZE = 2 * 1024 * 1024; // 2MB
+
+const handleLogoSelect = async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  if (file.size > MAX_SIZE) {
+    toast.error("Image must be less than 2MB");
+    return;
+  }
+
+  // Preview immediately
+  const localPreview = URL.createObjectURL(file);
+  setLogoPreview(localPreview);
+
+  const data = new FormData();
+  data.append("file", file);
+  data.append(
+    "upload_preset",
+    import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET
+  );
+  data.append("folder", "invoice-gen");
+  try {
+    const res = await fetch(
+      `${import.meta.env.VITE_CLOUDINARY_URL}/v1_1/${import.meta.env.VITE_CLOUDINARY_CLOUD_NAME}/image/upload`,
+      {
+        method: "POST",
+        body: data,
+      }
+    );
+
+    const result = await res.json();
+
+    if (!result.secure_url) {
+      throw new Error("Upload failed");
+    }
+
+    setFormData((prev) => ({
+      ...prev,
+      businessLogo: result.secure_url,
+    }));
+
+    toast.success("Logo uploaded successfully");
+  } catch (err) {
+    console.error(err);
+    toast.error("Image upload failed");
+  }
+};
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -81,6 +134,7 @@ const ProfilePage = () => {
               <InputField label="Phone" name="phone" icon={Phone} type="tel" value={formData.phone} onChange={handleInputChange} placeholder="(555) 123-4567" />
             </div>
           </div>
+        <LogoUpload label="Business Logo" name="businessLogo" preview={logoPreview || formData.businessLogo} onFileSelect={handleLogoSelect} />
         </div>
 
         <div className='px-6 py-4 bg-slate-50 border-t border-slate-200 flex justify-end'>
