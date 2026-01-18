@@ -33,6 +33,7 @@ const CreateInvoice = ({ existingInvoice, onSave }) => {
       items: [{ name: "", quantity: 1, unitPrice: 0, taxPercent: 0 }],
       notes: "",
       paymentTerms: "Net 15",
+      discount: 0,
     }
   );
 
@@ -60,6 +61,7 @@ const CreateInvoice = ({ existingInvoice, onSave }) => {
         ...existingInvoice,
         invoiceDate: moment(existingInvoice.invoiceDate).format("YYYY-MM-DD"),
         dueDate: moment(existingInvoice.dueDate).format("YYYY-MM-DD"),
+        discount: existingInvoice.discount || 0,
       });
     } else {
       const generateNewInvoiceNumber = async () => {
@@ -93,7 +95,7 @@ const CreateInvoice = ({ existingInvoice, onSave }) => {
     } else if (index !== undefined) {
       const newItems = [...formData.items];
       newItems[index] = { ...newItems[index], [name]: value };
-      setFormData((prev) => ({ ...prev, items: newItems}));
+      setFormData((prev) => ({ ...prev, items: newItems }));
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
     }
@@ -108,14 +110,25 @@ const CreateInvoice = ({ existingInvoice, onSave }) => {
     setFormData({ ...formData, items: newItems });
   };
 
-  const { subtotal, taxTotal, total } = (() => {
-    let subtotal = 0, taxTotal = 0;
+  // Price calculation
+  const { subtotal, taxTotal, discount, total } = (() => {
+    let subtotal = 0;
+    let taxTotal = 0;
+
     formData.items.forEach((item) => {
       const itemTotal = (item.quantity || 0) * (item.unitPrice || 0);
       subtotal += itemTotal;
       taxTotal += itemTotal * ((item.taxPercent || 0) / 100);
     });
-    return { subtotal, taxTotal, total: subtotal + taxTotal };
+
+    const discount = Number(formData.discount) || 0;
+
+    return {
+      subtotal,
+      taxTotal,
+      discount,
+      total: Math.max(subtotal + taxTotal - discount, 0), // ✅ prevent negative total
+    };
   })();
 
   const handleSubmit = async (e) => {
@@ -126,7 +139,7 @@ const CreateInvoice = ({ existingInvoice, onSave }) => {
       ...item,
       total: (item.quantity || 0) * (item.unitPrice || 0) * (1 + (item.taxPercent || 0) / 100),
     }));
-    const finalFormData = { ...formData, items: itemsWithTotal, subtotal, taxTotal, total};
+    const finalFormData = { ...formData, items: itemsWithTotal, subtotal, taxTotal, discount, total };
 
     if (onSave) {
       await onSave(finalFormData);
@@ -237,6 +250,7 @@ const CreateInvoice = ({ existingInvoice, onSave }) => {
       </div>
     </div>
 
+
     {/* Payment Terms Notes */}
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
       <div className="bg-white p-6 rounded-lg shadow-sm shadow-gray-100 border border-slate-200 space-y-4">
@@ -249,11 +263,27 @@ const CreateInvoice = ({ existingInvoice, onSave }) => {
           onChange={handleInputChange}
           options={["Net 15", "Net 30", "Full Pay", "Due on receipt"]}
         />
+        {/* Discount section */}
+          <InputField
+            label="Discount"
+            type="number"
+            name="discount"
+            min="0"
+            className="w-full"
+            value={formData.discount}
+            onChange={handleInputChange}
+            placeholder="0.00"
+          />
+
       </div>
+
+
       <div className="bg-white p-6 rounded-lg shadow-sm shadow-gray-100 border border-slate-200 flex flex-col justify-center">
         <div className="space-y-4">
           <div className="flex justify-between text-sm text-slate-600"><p>Subtotal:</p><p>₹{subtotal.toFixed(2)}</p></div>
+
           <div className="flex justify-between text-sm text-slate-600"><p>Tax:</p><p>₹{taxTotal.toFixed(2)}</p></div>
+          <div className="flex justify-between text-sm text-slate-600"><p>Discount:</p><p>₹{discount.toFixed(2)}</p></div>
           <div className="flex justify-between text-lg font-semibold text-slate-900 border-t border-slate-200 pt-4 mt-4"><p>Total:</p><p>₹{total.toFixed(2)}</p></div>
         </div>
       </div>

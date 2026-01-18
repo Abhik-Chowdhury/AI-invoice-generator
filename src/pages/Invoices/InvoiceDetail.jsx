@@ -115,7 +115,7 @@ const InvoiceDetail = () => {
                   <img
                     src={businessLogo}
                     alt="Business Logo"
-                    className="p-0 max-w-50 max-h-30 object-contain"
+                    className="p-0 mt-0.2 max-w-50 max-h-30 object-contain"
                   />
                 )}
 
@@ -172,7 +172,7 @@ const InvoiceDetail = () => {
           </div>
 
           {/* Product section */}
-          <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
+          <div className="mt-0.5 bg-white border border-slate-200 rounded-lg overflow-hidden">
             <table className="w-full divide-y divide-slate-200">
               <thead className="bg-slate-50">
                 <tr>
@@ -183,7 +183,7 @@ const InvoiceDetail = () => {
                 </tr>
               </thead>
 
-              <tbody className="bg-white divide-y divide-slate-200">
+              <tbody className="mt-0.3 bg-white divide-y divide-slate-200">
                 {invoice.items.map((item, index) => (
                   <tr key={index}>
                     <td className="px-4 sm:px-6 py-4 text-sm font-medium text-slate-900">{item.name}</td>
@@ -198,7 +198,7 @@ const InvoiceDetail = () => {
 
           {/* Bill grand total details & notes */}
 
-          <div className="flex justify-end mt-8">
+          <div className="flex justify-end mt-5">
             <div className="w-full max-w-sm space-y-3">
               <div className="flex justify-between text-sm text-slate-600">
                 <span>Subtotal</span>
@@ -208,6 +208,15 @@ const InvoiceDetail = () => {
                 <span>Tax</span>
                 <span>₹{invoice.taxTotal.toFixed(2)}</span>
               </div>
+
+              {Number(invoice.discount) > 0 && (
+                <div className="flex justify-between text-sm text-slate-600">
+                  <span>Discount</span>
+                  <span>₹{Number(invoice.discount).toFixed(2)}</span>
+                </div>
+              )}
+
+
               <div className="flex justify-between font-semibold text-lg text-slate-900 border-t border-slate-200 pt-3 mt-3">
                 <span className="">Total</span>
                 <span>₹{invoice.total.toFixed(2)}</span>
@@ -218,7 +227,7 @@ const InvoiceDetail = () => {
           {/* Notes */}
 
           {invoice.notes && (
-            <div className="mt-8 pt-8 border-t border-slate-200">
+            <div className="mt-7 pt-7 border-t border-slate-200">
               <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3">Notes</h3>
               <p className="text-sm text-slate-600">{invoice.notes}</p>
             </div>
