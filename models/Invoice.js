@@ -1,11 +1,11 @@
 const mongoose = require("mongoose");
 
 const itemSchema = new mongoose.Schema({
-    name: {type: String, required: true},
-    quantity: {type: Number, required: true},
-    unitPrice: {type: Number, required: true},
-    taxPercent: {type: Number, default: 0},
-    total: { type: Number, required: true},
+    name: { type: String, required: true },
+    quantity: { type: Number, required: true },
+    unitPrice: { type: Number, required: true },
+    taxPercent: { type: Number, default: 0 },
+    total: { type: Number, required: true },
 });
 
 const invoiceSchema = new mongoose.Schema(
@@ -25,6 +25,7 @@ const invoiceSchema = new mongoose.Schema(
         },
         dueDate: {
             type: Date,
+            default: Date.now,
         },
         billFrom: {
             businessName: String,
@@ -53,9 +54,13 @@ const invoiceSchema = new mongoose.Schema(
         },
         subtotal: Number,
         taxTotal: Number,
+        discount: {
+            type: Number,
+            default: 0
+        },
         total: Number,
     },
-    { timestamps: true}
+    { timestamps: true }
 );
 
 module.exports = mongoose.model("Invoice", invoiceSchema);
