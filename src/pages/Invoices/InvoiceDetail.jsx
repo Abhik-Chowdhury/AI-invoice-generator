@@ -109,18 +109,18 @@ const InvoiceDetail = () => {
         >
           <div className="flex flex-col sm:flex-row justify-between items-start pb-8 border-b border-slate-200">
             <div>
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col">
                 {/* Business Logo – renders ONLY if exists */}
                 {businessLogo && businessLogo.trim() !== "" && (
                   <img
                     src={businessLogo}
                     alt="Business Logo"
-                    className="p-0 mt-0.2 max-w-50 max-h-30 object-contain"
+                    className="mt-0.1 max-w-50 max-h-30 object-contain"
                   />
                 )}
 
                 <h2 className="text-3xl font-bold text-slate-900">INVOICE</h2>
-                <p className="text-sm text-slate-500 mt-2"># {invoice.invoiceNumber}</p>
+                <p className="text-sm text-slate-500 mt-1"># {invoice.invoiceNumber}</p>
               </div>
             </div>
             <div className="text-left sm:text-right mt-4 sm:mt-0">
@@ -134,7 +134,7 @@ const InvoiceDetail = () => {
           </div>
 
           {/* Bill From details */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 my-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 my-4">
             <div>
               <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3">Bill From</h3>
               <p className="font-semibold text-slate-800">{invoice.billFrom.businessName}</p>
@@ -155,7 +155,7 @@ const InvoiceDetail = () => {
           </div>
 
           {/* invoice date & product fetch*/}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 my-8">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 my-6">
             <div>
               <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3">Invoice Date</h3>
               <p className="font-medium text-slate-800">{new Date(invoice.invoiceDate).toLocaleDateString()}</p>
@@ -172,7 +172,7 @@ const InvoiceDetail = () => {
           </div>
 
           {/* Product section */}
-          <div className="mt-0.5 bg-white border border-slate-200 rounded-lg overflow-hidden">
+          <div className="mt-0.6 bg-white border border-slate-200 rounded-lg overflow-hidden">
             <table className="w-full divide-y divide-slate-200">
               <thead className="bg-slate-50">
                 <tr>
@@ -185,11 +185,11 @@ const InvoiceDetail = () => {
 
               <tbody className="mt-0.3 bg-white divide-y divide-slate-200">
                 {invoice.items.map((item, index) => (
-                  <tr key={index}>
-                    <td className="px-4 sm:px-6 py-4 text-sm font-medium text-slate-900">{item.name}</td>
-                    <td className="px-4 sm:px-6 py-4 text-center font-medium text-slate-600">{item.quantity}</td>
-                    <td className="px-4 sm:px-6 py-4 text-right font-medium text-slate-600">₹{item.unitPrice.toFixed(2)}</td>
-                    <td className="px-4 sm:px-6 py-4 text-right font-medium text-slate-900">₹{item.total.toFixed(2)}</td>
+                  <tr key={index} className="print:break-inside-avoid">
+                    <td className="p-3 px-4 sm:px-6 py-4 text-sm font-medium text-slate-900">{item.name}</td>
+                    <td className="p-3 px-4 sm:px-6 py-4 text-center font-medium text-slate-600">{item.quantity}</td>
+                    <td className="p-3 px-4 sm:px-6 py-4 text-right font-medium text-slate-600">₹{item.unitPrice.toFixed(2)}</td>
+                    <td className="p-3 px-4 sm:px-6 py-4 text-right font-medium text-slate-900">₹{item.total.toFixed(2)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -198,43 +198,44 @@ const InvoiceDetail = () => {
 
           {/* Bill grand total details & notes */}
 
-          <div className="flex justify-end mt-5">
-            <div className="w-full max-w-sm space-y-3">
-              <div className="flex justify-between text-sm text-slate-600">
-                <span>Subtotal</span>
-                <span>₹{invoice.subtotal.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between text-sm text-slate-600">
-                <span>Tax</span>
-                <span>₹{invoice.taxTotal.toFixed(2)}</span>
-              </div>
-
-              {Number(invoice.discount) > 0 && (
+          <div className=" print:break-after-avoid">
+            <div className="flex justify-end mt-5">
+              <div className="w-full max-w-sm space-y-3">
                 <div className="flex justify-between text-sm text-slate-600">
-                  <span>Discount</span>
-                  <span>₹{Number(invoice.discount).toFixed(2)}</span>
+                  <span>Subtotal</span>
+                  <span>₹{invoice.subtotal.toFixed(2)}</span>
                 </div>
-              )}
+                <div className="flex justify-between text-sm text-slate-600">
+                  <span>Tax</span>
+                  <span>₹{invoice.taxTotal.toFixed(2)}</span>
+                </div>
+
+                {Number(invoice.discount) > 0 && (
+                  <div className="flex justify-between text-sm text-slate-600">
+                    <span>Discount</span>
+                    <span>₹{Number(invoice.discount).toFixed(2)}</span>
+                  </div>
+                )}
 
 
-              <div className="flex justify-between font-semibold text-lg text-slate-900 border-t border-slate-200 pt-3 mt-3">
-                <span className="">Total</span>
-                <span>₹{invoice.total.toFixed(2)}</span>
+                <div className="flex justify-between font-semibold text-lg text-slate-900 border-t border-slate-200 pt-3 mt-3">
+                  <span className="">Total</span>
+                  <span>₹{invoice.total.toFixed(2)}</span>
+                </div>
               </div>
             </div>
+
+            {/* Notes */}
+
+            {invoice.notes && (
+              <div className="mt-4 pt-5 border-t border-slate-200">
+                <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2">Notes</h3>
+                <p className="text-sm text-slate-600">{invoice.notes}</p>
+              </div>
+            )}
           </div>
-
-          {/* Notes */}
-
-          {invoice.notes && (
-            <div className="mt-7 pt-7 border-t border-slate-200">
-              <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3">Notes</h3>
-              <p className="text-sm text-slate-600">{invoice.notes}</p>
-            </div>
-          )}
         </div>
       </div>
-
       <style>
         {`
           @page {
@@ -249,6 +250,7 @@ const InvoiceDetail = () => {
           }
           #invoice-content-wrapper {
             position: absolute;
+            inset: 0;
             left: 0;
             top: 0;
             right: 0;
@@ -260,6 +262,17 @@ const InvoiceDetail = () => {
             border-radius: 0;
             padding: 0;
           }
+            table {
+              page-break-inside: auto;
+            }
+
+            tr {
+              page-break-inside: avoid;
+            }
+
+            thead {
+              display: table-header-group;
+            }
         }
       `}
       </style>

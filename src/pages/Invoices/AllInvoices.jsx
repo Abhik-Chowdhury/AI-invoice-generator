@@ -7,6 +7,8 @@ import { useNavigate } from 'react-router-dom';
 import Button from '../../components/ui/Button';
 import CreateWithAIModal from '../../components/invoices/CreateWithAIModal';
 import ReminderModal from '../../components/invoices/ReminderModal';
+import { use } from 'react';
+import Pagination from '../../components/ui/Pagination';
 
 const AllInvoices = () => {
 
@@ -20,6 +22,15 @@ const AllInvoices = () => {
   const [isReminderModalOpen, setIsReminderModalOpen] = useState(false);
   const [selectedInvoiceId, setSelectedInvoiceId] = useState(null);
   const navigate = useNavigate();
+
+  // pagination of invoices
+
+  const ITEMS_PER_PAGE = 5;
+  const [currentPage, setCurrentPage] = useState(1);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter, invoices])
 
   useEffect(() => {
     const fetchInvoices = async () => {
@@ -58,13 +69,13 @@ const AllInvoices = () => {
 
   const handleStatusChange = async (invoice) => {
     setStatusChangingLoading(invoice._id);
-    try{
+    try {
       const newStatus = invoice.status === 'Paid' ? 'Unpaid' : 'Paid';
-      const updatedInvoice = { ...invoice, status: newStatus};
+      const updatedInvoice = { ...invoice, status: newStatus };
 
       const response = await axiosInstance.put(API_PATHS.INVOICE.UPDATE_INVOICE(invoice._id), updatedInvoice);
       setInvoices(invoices.map(inv => inv._id === invoice._id ? response.data : inv));
-    } catch (err){
+    } catch (err) {
       setError('Failed to update invoice status.');
       console.error(err);
     } finally {
@@ -84,6 +95,15 @@ const AllInvoices = () => {
       .filter(invoice => invoice.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase()) || invoice.billTo.clientName.toLowerCase().includes(searchTerm.toLowerCase())
       );
   }, [invoices, searchTerm, statusFilter]);
+
+  // Pagination calculation
+  const totalPages = Math.ceil(filteredInvoices.length / ITEMS_PER_PAGE);
+
+  const paginatedInvoices = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredInvoices.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [filteredInvoices, currentPage]);
+
 
   if (loading) {
     return <div className="flex justify-center itw-8 h-8 animate-spin text-blue-600"><Loader2 className='' /></div>
@@ -150,7 +170,7 @@ const AllInvoices = () => {
           </div>
         </div>
 
-        {filteredInvoices.length === 0 ? (<div className="flex flex-col items-center justify-center py-12 text-center">
+        {paginatedInvoices.length === 0 ? (<div className="flex flex-col items-center justify-center py-12 text-center">
           <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
             <FileText className="w-8 h-8 text-slate-400" />
           </div>
@@ -161,55 +181,67 @@ const AllInvoices = () => {
           )}
         </div>
         ) : (
-          <div className="w-[90vw] md:w-auto overflow-x-auto">
-            <table className="min-w-full divide-y divide-slate-200">
-              <thead className="min-w-full divide-y divide-slate-200">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Invoice #</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Client</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Amount</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Due Date</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
-                </tr>
-              </thead>
-
-              {/* Invoice fetch by search */}
-              <tbody className="bg-white divide-y divide-slate-200">
-                {filteredInvoices.map(invoice => (
-                  <tr key={invoice._id} className="hover:bg-slate-50">
-                    <td onClick={() => navigate(`/invoices/${invoice._id}`)} className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900 cursor-pointer">{invoice.invoiceNumber}</td>
-                    <td onClick={() => navigate(`/invoices/${invoice._id}`)} className="px-6 py-4 whitespace-nowrap text-sm text-slate-600 cursor-pointer">{invoice.billTo?.clientName || '_'}</td>
-                    <td onClick={() => navigate(`/invoices/${invoice._id}`)} className="px-6 py-4 whitespace-nowrap text-sm text-slate-600 cursor-pointer">₹{invoice.total.toFixed(2)}</td>
-                    <td onClick={() => navigate(`/invoices/${invoice._id}`)} className="px-6 py-4 whitespace-nowrap text-sm text-slate-600 cursor-pointer">{invoice.dueDate ? moment(invoice.dueDate).format('MMM D, YYYY') : 'Invalid Date'}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${invoice.status === 'Paid' ? 'bg-emerald-100 text-emerald-800' :
-                        invoice.status === 'Pending' ? 'bg-amber-100 text-amber-800' :
-                          'bg-red-100 text-red-800'
-                        }`}>{invoice.status || 'Unknown'}</span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation() 
-                      }>
-                        <Button
-                          size='small'
-                          variant='secondary'
-                          onClick={() => handleStatusChange(invoice)}
-                          isLoading={statusChangeLoading === invoice._id}
-                        >
-                          {invoice.status === 'Paid' ? 'Mark Unpaid' : 'Mark Paid'}
-                        </Button>
-                        <Button size='small' variant='ghost' onClick={() => navigate(`/invoices/${invoice._id}`)}><Edit className="w-4 h-4" /></Button>
-                        <Button size='small' variant='ghost' onClick={() => handleDelete(invoice._id)}><Trash2 className="w-4 h-4 text-red-500" /></Button>
-                        {invoice.status !== 'Paid' && (
-                          <Button size="small" variant='ghost' onClick={() => handleOpenReminderModal(invoice._id)} title="Generate Reminder"><Mail className="w-4 h-4 text-blue-500" /></Button>
-                        )}
-                      </div>
-                    </td>
+          <div className="w-full overflow-hidden">
+            <div className='relative -mx-4 sm:mx-0'>
+            <div className='overflow-x-auto'>
+              <div className='inline-block min-w-full align-middle'>
+              <table className="min-w-full divide-y divide-slate-200">
+                <thead className="min-w-full divide-y divide-slate-200">
+                  <tr>
+                    <th className="px-9 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Invoice #</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Client</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Amount</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Due Date</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+
+                {/* Invoice fetch by search */}
+                <tbody className="bg-white divide-y divide-slate-200">
+                  {paginatedInvoices.map(invoice => (
+                    <tr key={invoice._id} className="hover:bg-slate-50">
+                      <td onClick={() => navigate(`/invoices/${invoice._id}`)} className="px-9 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900 cursor-pointer">{invoice.invoiceNumber}</td>
+                      <td onClick={() => navigate(`/invoices/${invoice._id}`)} className="px-6 sm:px-6 py-4 whitespace-nowrap text-sm text-slate-600 cursor-pointer">{invoice.billTo?.clientName || '_'}</td>
+                      <td onClick={() => navigate(`/invoices/${invoice._id}`)} className="px-6 sm:px-6 py-4 whitespace-nowrap text-sm text-slate-600 cursor-pointer">₹{invoice.total.toFixed(2)}</td>
+                      <td onClick={() => navigate(`/invoices/${invoice._id}`)} className="px-6 sm:px-6 py-4 whitespace-nowrap text-sm text-slate-600 cursor-pointer">{invoice.dueDate ? moment(invoice.dueDate).format('MMM D, YYYY') : 'Invalid Date'}</td>
+                      <td className="px-6 sm:px-6 py-4 whitespace-nowrap text-sm">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${invoice.status === 'Paid' ? 'bg-emerald-100 text-emerald-800' :
+                          invoice.status === 'Pending' ? 'bg-amber-100 text-amber-800' :
+                            'bg-red-100 text-red-800'
+                          }`}>{invoice.status || 'Unknown'}</span>
+                      </td>
+                      <td className="px-6 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()
+                        }>
+                          <Button
+                            size='small'
+                            variant='secondary'
+                            onClick={() => handleStatusChange(invoice)}
+                            isLoading={statusChangeLoading === invoice._id}
+                          >
+                            {invoice.status === 'Paid' ? 'Mark Unpaid' : 'Mark Paid'}
+                          </Button>
+                          <Button size='small' variant='ghost' onClick={() => navigate(`/invoices/${invoice._id}`)}><Edit className="w-4 h-4" /></Button>
+                          <Button size='small' variant='ghost' onClick={() => handleDelete(invoice._id)}><Trash2 className="w-4 h-4 text-red-500" /></Button>
+                          {invoice.status !== 'Paid' && (
+                            <Button size="small" variant='ghost' onClick={() => handleOpenReminderModal(invoice._id)} title="Generate Reminder"><Mail className="w-4 h-4 text-blue-500" /></Button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              </div>
+            </div>
+            </div>
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+              className="p-4 border-t border-slate-200"
+            />
           </div>
         )}
       </div>
