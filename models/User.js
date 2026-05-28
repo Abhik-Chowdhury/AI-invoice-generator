@@ -23,6 +23,7 @@ const userSchema = new mongoose.Schema(
         address: { type: String, default: '' },
         phone: { type: String, default: '' },
         businessLogo: {type: String, default: ''},
+        businessUpiId: {type: String, default: ''},
     },
     { timestamps: true }
 );
