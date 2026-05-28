@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { Loader2, User, Mail, Building, Phone, MapPin } from 'lucide-react';
+import { Loader2, User, Mail, Building, Phone, MapPin, BadgeIndianRupee } from 'lucide-react';
 import axiosInstance from '../../utils/axiosInstance';
 import { API_PATHS } from '../../utils/apiPaths';
 import toast from 'react-hot-toast';
@@ -18,6 +18,7 @@ const ProfilePage = () => {
     address: '',
     phone: '',
     businessLogo: '',
+    businessUpiId: '',
   });
 
   useEffect(() => {
@@ -28,6 +29,7 @@ const ProfilePage = () => {
         address: user.address || '',
         phone: user.phone || '',
         businessLogo: user.businessLogo || '',
+        businessUpiId: user.businessUpiId || '',
       });
     }
   }, [user]);
@@ -132,6 +134,7 @@ const handleLogoSelect = async (e) => {
               <InputField label="Business Name" name="businessName" icon={Building} type="text" value={formData.businessName} onChange={handleInputChange} placeholder="Your Company LLC" />
               <TextareaField label="Address" name="address" icon={MapPin} value={formData.address} onChange={handleInputChange} placeholder="123 sham Road, Anytown IND" />
               <InputField label="Phone" name="phone" icon={Phone} type="tel" value={formData.phone} onChange={handleInputChange} placeholder="(555) 123-4567" />
+              <InputField label="UPI ID" name="businessUpiId" icon={BadgeIndianRupee} type="text" value={formData.businessUpiId} onChange={handleInputChange} placeholder="Enter your UPI ID" />
             </div>
           </div>
         <LogoUpload label="Business Logo" name="businessLogo" preview={logoPreview || formData.businessLogo} onFileSelect={handleLogoSelect} />
