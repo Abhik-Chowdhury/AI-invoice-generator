@@ -88,49 +88,144 @@ const InvoiceDetail = () => {
        PRINT FUNCTION
     ========================= */
 
-    const handlePrint = () => {
-        const source = invoiceRef.current;
+    // const handlePrint = () => {
+    //     const source = invoiceRef.current;
 
-        if (!source) {
-            window.print();
-            return;
-        }
+    //     if (!source) {
+    //         window.print();
+    //         return;
+    //     }
 
-        document.getElementById("print-root")?.remove();
+    //     document.getElementById("print-root")?.remove();
 
-        const printRoot = document.createElement("div");
-        printRoot.id = "print-root";
-        document.body.appendChild(printRoot);
+    //     const printRoot = document.createElement("div");
+    //     printRoot.id = "print-root";
+    //     document.body.appendChild(printRoot);
 
-        const headerHTML =
-            source.querySelector(".invoice-print-header")?.outerHTML || "";
+    //     const headerHTML =
+    //         source.querySelector(".invoice-print-header")?.outerHTML || "";
 
-        const theadHTML =
-            source.querySelector("thead")?.outerHTML || "";
+    //     const theadHTML =
+    //         source.querySelector("thead")?.outerHTML || "";
 
-        const summaryHTML =
-            source.querySelector(".invoice-summary-section")?.outerHTML || "";
+    //     const summaryHTML =
+    //         source.querySelector(".invoice-summary-section")?.outerHTML || "";
 
-        const rows = Array.from(source.querySelectorAll("tbody tr"));
+    //     const rows = Array.from(source.querySelectorAll("tbody tr"));
 
-        const ITEMS_PER_PAGE = 6;
-        const pages = [];
+    //     const ITEMS_PER_PAGE = 6;
+    //     const pages = [];
 
-        for (let i = 0; i < rows.length; i += ITEMS_PER_PAGE) {
-            pages.push(rows.slice(i, i + ITEMS_PER_PAGE).map((row) => row.outerHTML));
-        }
+    //     for (let i = 0; i < rows.length; i += ITEMS_PER_PAGE) {
+    //         pages.push(rows.slice(i, i + ITEMS_PER_PAGE).map((row) => row.outerHTML));
+    //     }
 
-        const totalPages = pages.length;
-        const isSinglePage = totalPages === 1;
+    //     const totalPages = pages.length;
+    //     const isSinglePage = totalPages === 1;
 
-        printRoot.className = isSinglePage ? "single-page-print" : "";
+    //     printRoot.className = isSinglePage ? "single-page-print" : "";
 
-        printRoot.innerHTML = pages
-            .map((pageRows, index) => {
-                const isLastPage = index === pages.length - 1;
-                const pageNumber = index + 1;
+    //     printRoot.innerHTML = pages
+    //         .map((pageRows, index) => {
+    //             const isLastPage = index === pages.length - 1;
+    //             const pageNumber = index + 1;
 
-                return `
+    //             return `
+    //     <div class="print-page">
+    //       ${headerHTML}
+
+    //       <div class="print-table-wrapper">
+    //         <table class="print-table">
+    //           ${theadHTML}
+    //           <tbody>
+    //             ${pageRows.join("")}
+    //           </tbody>
+    //         </table>
+    //       </div>
+
+    //       ${isLastPage
+    //                     ? `
+    //             <div class="print-summary-wrapper">
+    //               ${summaryHTML}
+    //             </div>
+    //           `
+    //                     : ""
+    //                 }
+
+    //       ${!isSinglePage
+    //                     ? `
+    //             <div class="print-page-footer">
+    //               Page ${pageNumber} of ${totalPages}
+    //             </div>
+    //           `
+    //                     : ""
+    //                 }
+    //     </div>
+    //   `;
+    //         })
+    //         .join("");
+
+    //     requestAnimationFrame(() => {
+    //         requestAnimationFrame(() => {
+    //             printRoot.offsetHeight;
+    //             window.print();
+
+    //             const cleanup = () => {
+    //                 document.getElementById("print-root")?.remove();
+    //                 window.removeEventListener("afterprint", cleanup);
+    //             };
+
+    //             window.addEventListener("afterprint", cleanup);
+    //             setTimeout(cleanup, 1000);
+    //         });
+    //     });
+    // };
+
+
+    const handlePrint = async () => {
+  const source = invoiceRef.current;
+
+  if (!source) {
+    window.print();
+    return;
+  }
+
+  // Remove any old print root
+  document.getElementById("print-root")?.remove();
+
+  const printRoot = document.createElement("div");
+  printRoot.id = "print-root";
+  printRoot.style.visibility = "hidden";
+  document.body.appendChild(printRoot);
+
+  const headerHTML =
+    source.querySelector(".invoice-print-header")?.outerHTML || "";
+
+  const theadHTML = source.querySelector("thead")?.outerHTML || "";
+
+  const summaryHTML =
+    source.querySelector(".invoice-summary-section")?.outerHTML || "";
+
+  const rows = Array.from(source.querySelectorAll("tbody tr"));
+
+  const ITEMS_PER_PAGE = 6;
+  const pages = [];
+
+  for (let i = 0; i < rows.length; i += ITEMS_PER_PAGE) {
+    pages.push(rows.slice(i, i + ITEMS_PER_PAGE).map((row) => row.outerHTML));
+  }
+
+  const totalPages = pages.length;
+  const isSinglePage = totalPages === 1;
+
+  printRoot.className = isSinglePage ? "single-page-print" : "";
+
+  printRoot.innerHTML = pages
+    .map((pageRows, index) => {
+      const isLastPage = index === pages.length - 1;
+      const pageNumber = index + 1;
+
+      return `
         <div class="print-page">
           ${headerHTML}
 
@@ -143,44 +238,75 @@ const InvoiceDetail = () => {
             </table>
           </div>
 
-          ${isLastPage
-                        ? `
+          ${
+            isLastPage
+              ? `
                 <div class="print-summary-wrapper">
                   ${summaryHTML}
                 </div>
               `
-                        : ""
-                    }
+              : ""
+          }
 
-          ${!isSinglePage
-                        ? `
+          ${
+            !isSinglePage
+              ? `
                 <div class="print-page-footer">
                   Page ${pageNumber} of ${totalPages}
                 </div>
               `
-                        : ""
-                    }
+              : ""
+          }
         </div>
       `;
-            })
-            .join("");
+    })
+    .join("");
 
-        requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-                printRoot.offsetHeight;
-                window.print();
+  const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-                const cleanup = () => {
-                    document.getElementById("print-root")?.remove();
-                    window.removeEventListener("afterprint", cleanup);
-                };
+  let cleanedUp = false;
+  const cleanup = () => {
+    if (cleanedUp) return;
+    cleanedUp = true;
 
-                window.addEventListener("afterprint", cleanup);
-                setTimeout(cleanup, 1000);
-            });
-        });
-    };
+    document.getElementById("print-root")?.remove();
+    window.removeEventListener("afterprint", onAfterPrint);
+    document.removeEventListener("visibilitychange", onVisibilityChange);
+  };
 
+  const onAfterPrint = () => {
+    // Mobile browsers often need extra time to finish "Save as PDF"
+    setTimeout(cleanup, isMobile ? 2500 : 500);
+  };
+
+  const onVisibilityChange = () => {
+    if (document.visibilityState === "visible") {
+      setTimeout(cleanup, 500);
+    }
+  };
+
+  window.addEventListener("afterprint", onAfterPrint, { once: true });
+  document.addEventListener("visibilitychange", onVisibilityChange);
+
+  try {
+    // Wait for layout/fonts so print rendering is stable on mobile
+    if (document.fonts?.ready) {
+      await document.fonts.ready.catch(() => {});
+    }
+
+    await new Promise((resolve) =>
+      requestAnimationFrame(() => requestAnimationFrame(resolve))
+    );
+
+    printRoot.style.visibility = "visible";
+    window.print();
+  } finally {
+    // Final fallback cleanup, but not too early
+    setTimeout(cleanup, isMobile ? 8000 : 3000);
+  }
+};
+
+    
     /* =========================
        LOADING
     ========================= */
