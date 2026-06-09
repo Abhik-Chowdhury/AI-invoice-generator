@@ -181,51 +181,291 @@ const InvoiceDetail = () => {
     //     });
     // };
 
+    // Clean up function 
+    const clearOldPrintState = async () => {
+        // remove old print roots
+        document.querySelectorAll("#print-root").forEach((el) => {
+            el.remove();
+        });
 
+        // clear browser selection memory
+        if (window.getSelection) {
+            const selection = window.getSelection();
+            selection?.removeAllRanges();
+        }
+
+        // force layout recalculation
+        document.body.offsetHeight;
+
+        // wait 2 frames so mobile compositor resets
+        await new Promise((resolve) =>
+            requestAnimationFrame(() =>
+                requestAnimationFrame(resolve)
+            )
+        );
+
+        // mobile browsers need tiny cooldown
+        await new Promise((resolve) =>
+            setTimeout(resolve, 300)
+        );
+    };
+    // The latest handlePrint
+    // const handlePrint = async () => {
+    //     const isMobile =
+    //         /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+    //     if (isMobile) {
+    //         await clearOldPrintState();
+    //     }
+
+    //     const source = invoiceRef.current;
+
+    //     if (!source) {
+    //         window.print();
+    //         return;
+    //     }
+
+    //     // Remove any old print root
+    //     document.getElementById("print-root")?.remove();
+
+    //     const printRoot = document.createElement("div");
+    //     printRoot.id = "print-root";
+    //     printRoot.style.visibility = "hidden";
+    //     document.body.appendChild(printRoot);
+
+    //     const headerHTML =
+    //         source.querySelector(".invoice-print-header")?.outerHTML || "";
+
+    //     const theadHTML = source.querySelector("thead")?.outerHTML || "";
+
+    //     const summaryHTML =
+    //         source.querySelector(".invoice-summary-section")?.outerHTML || "";
+
+    //     const rows = Array.from(source.querySelectorAll("tbody tr"));
+
+    //     const ITEMS_PER_PAGE = 6;
+    //     const pages = [];
+
+    //     for (let i = 0; i < rows.length; i += ITEMS_PER_PAGE) {
+    //         pages.push(rows.slice(i, i + ITEMS_PER_PAGE).map((row) => row.outerHTML));
+    //     }
+
+    //     const totalPages = pages.length;
+    //     const isSinglePage = totalPages === 1;
+
+    //     printRoot.className = isSinglePage ? "single-page-print" : "";
+
+    //     printRoot.innerHTML = pages
+    //         .map((pageRows, index) => {
+    //             const isLastPage = index === pages.length - 1;
+    //             const pageNumber = index + 1;
+
+    //             return `
+    //     <div class="print-page">
+    //       ${headerHTML}
+
+    //       <div class="print-table-wrapper">
+    //         <table class="print-table">
+    //           ${theadHTML}
+    //           <tbody>
+    //             ${pageRows.join("")}
+    //           </tbody>
+    //         </table>
+    //       </div>
+
+    //       ${isLastPage
+    //                     ? `
+    //             <div class="print-summary-wrapper">
+    //               ${summaryHTML}
+    //             </div>
+    //           `
+    //                     : ""
+    //                 }
+
+    //       ${!isSinglePage
+    //                     ? `
+    //             <div class="print-page-footer">
+    //               Page ${pageNumber} of ${totalPages}
+    //             </div>
+    //           `
+    //                     : ""
+    //                 }
+    //     </div>
+    //   `;
+    //         })
+    //         .join("");
+
+    //     // const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+    //     let cleanedUp = false;
+    //     const cleanup = () => {
+    //         if (cleanedUp) return;
+    //         cleanedUp = true;
+
+    //         document.getElementById("print-root")?.remove();
+    //         window.removeEventListener("afterprint", onAfterPrint);
+    //         document.removeEventListener("visibilitychange", onVisibilityChange);
+    //     };
+
+    //     const onAfterPrint = () => {
+    //         // Mobile browsers often need extra time to finish "Save as PDF"
+    //         setTimeout(cleanup, isMobile ? 2500 : 500);
+    //     };
+
+    //     const onVisibilityChange = () => {
+    //         if (document.visibilityState === "visible") {
+    //             setTimeout(cleanup, 500);
+    //         }
+    //     };
+
+    //     window.addEventListener("afterprint", onAfterPrint, { once: true });
+    //     document.addEventListener("visibilitychange", onVisibilityChange);
+
+    //     try {
+    //         // Wait for layout/fonts so print rendering is stable on mobile
+    //         if (document.fonts?.ready) {
+    //             await document.fonts.ready.catch(() => { });
+    //         }
+
+    //         await new Promise((resolve) =>
+    //             requestAnimationFrame(() => requestAnimationFrame(resolve))
+    //         );
+
+    //         printRoot.style.visibility = "visible";
+    //         window.print();
+    //         if (isMobile) {
+    //             await new Promise((resolve) =>
+    //                 setTimeout(resolve, 800)
+    //             );
+    //         }
+
+    //         window.print();
+    //     } finally {
+    //         // Final fallback cleanup, but not too early
+    //         setTimeout(cleanup, isMobile ? 8000 : 3000);
+    //     }
+    // };
+
+    // New handle print 
     const handlePrint = async () => {
-  const source = invoiceRef.current;
+        const source = invoiceRef.current;
 
-  if (!source) {
-    window.print();
-    return;
-  }
+        if (!source) {
+            const printWindow = window.open("", "_blank");
 
-  // Remove any old print root
-  document.getElementById("print-root")?.remove();
+            if (!printWindow) {
+                alert("Please allow popups for printing.");
+                return;
+            }
 
-  const printRoot = document.createElement("div");
-  printRoot.id = "print-root";
-  printRoot.style.visibility = "hidden";
-  document.body.appendChild(printRoot);
+            printWindow.document.open();
 
-  const headerHTML =
-    source.querySelector(".invoice-print-header")?.outerHTML || "";
+            printWindow.document.write(`
+  <html>
+    <head>
+      <title>Invoice</title>
 
-  const theadHTML = source.querySelector("thead")?.outerHTML || "";
+      <style>
+        ${Array.from(document.styleSheets)
+                    .map((sheet) => {
+                        try {
+                            return Array.from(sheet.cssRules)
+                                .map((rule) => rule.cssText)
+                                .join("\n");
+                        } catch {
+                            return "";
+                        }
+                    })
+                    .join("\n")}
+      </style>
+    </head>
 
-  const summaryHTML =
-    source.querySelector(".invoice-summary-section")?.outerHTML || "";
+    <body>
+      ${printRoot.innerHTML}
+    </body>
+  </html>
+`);
 
-  const rows = Array.from(source.querySelectorAll("tbody tr"));
+            printWindow.document.close();
 
-  const ITEMS_PER_PAGE = 6;
-  const pages = [];
+            const doPrint = async () => {
+                try {
+                    await printWindow.document.fonts?.ready;
 
-  for (let i = 0; i < rows.length; i += ITEMS_PER_PAGE) {
-    pages.push(rows.slice(i, i + ITEMS_PER_PAGE).map((row) => row.outerHTML));
-  }
+                    setTimeout(() => {
+                        printWindow.focus();
+                        printWindow.print();
 
-  const totalPages = pages.length;
-  const isSinglePage = totalPages === 1;
+                        setTimeout(() => {
+                            printWindow.close();
+                        }, 1000);
+                    }, isMobile ? 1200 : 300);
+                } catch (e) {
+                    printWindow.print();
 
-  printRoot.className = isSinglePage ? "single-page-print" : "";
+                    setTimeout(() => {
+                        printWindow.close();
+                    }, 1000);
+                }
+            };
 
-  printRoot.innerHTML = pages
-    .map((pageRows, index) => {
-      const isLastPage = index === pages.length - 1;
-      const pageNumber = index + 1;
+            doPrint();
+            return;
+        }
 
-      return `
+        const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+        const clearOldPrintState = async () => {
+            document.getElementById("print-root")?.remove();
+
+            if (window.getSelection) {
+                window.getSelection()?.removeAllRanges();
+            }
+
+            // Let the browser release old print/layout work
+            await new Promise((resolve) =>
+                requestAnimationFrame(() => requestAnimationFrame(resolve))
+            );
+        };
+
+        if (isMobile) {
+            await clearOldPrintState();
+        }
+
+        document.getElementById("print-root")?.remove();
+
+        const printRoot = document.createElement("div");
+        printRoot.id = "print-root";
+        document.body.appendChild(printRoot);
+
+        const headerHTML =
+            source.querySelector(".invoice-print-header")?.outerHTML || "";
+
+        const theadHTML = source.querySelector("thead")?.outerHTML || "";
+
+        const summaryHTML =
+            source.querySelector(".invoice-summary-section")?.outerHTML || "";
+
+        const rows = Array.from(source.querySelectorAll("tbody tr"));
+
+        const ITEMS_PER_PAGE = 6;
+        const pages = [];
+
+        for (let i = 0; i < rows.length; i += ITEMS_PER_PAGE) {
+            pages.push(rows.slice(i, i + ITEMS_PER_PAGE).map((row) => row.outerHTML));
+        }
+
+        const totalPages = pages.length;
+        const isSinglePage = totalPages === 1;
+
+        printRoot.className = isSinglePage ? "single-page-print" : "";
+
+        printRoot.innerHTML = pages
+            .map((pageRows, index) => {
+                const isLastPage = index === pages.length - 1;
+                const pageNumber = index + 1;
+
+                return `
         <div class="print-page">
           ${headerHTML}
 
@@ -238,75 +478,72 @@ const InvoiceDetail = () => {
             </table>
           </div>
 
-          ${
-            isLastPage
-              ? `
+          ${isLastPage
+                        ? `
                 <div class="print-summary-wrapper">
                   ${summaryHTML}
                 </div>
               `
-              : ""
-          }
+                        : ""
+                    }
 
-          ${
-            !isSinglePage
-              ? `
+          ${!isSinglePage
+                        ? `
                 <div class="print-page-footer">
                   Page ${pageNumber} of ${totalPages}
                 </div>
               `
-              : ""
-          }
+                        : ""
+                    }
         </div>
       `;
-    })
-    .join("");
+            })
+            .join("");
 
-  const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+        let cleanedUp = false;
 
-  let cleanedUp = false;
-  const cleanup = () => {
-    if (cleanedUp) return;
-    cleanedUp = true;
+        const cleanup = () => {
+            if (cleanedUp) return;
+            cleanedUp = true;
 
-    document.getElementById("print-root")?.remove();
-    window.removeEventListener("afterprint", onAfterPrint);
-    document.removeEventListener("visibilitychange", onVisibilityChange);
-  };
+            document.getElementById("print-root")?.remove();
+            window.removeEventListener("afterprint", onAfterPrint);
+            document.removeEventListener("visibilitychange", onVisibilityChange);
+        };
 
-  const onAfterPrint = () => {
-    // Mobile browsers often need extra time to finish "Save as PDF"
-    setTimeout(cleanup, isMobile ? 2500 : 500);
-  };
+        const onAfterPrint = () => {
+            setTimeout(cleanup, isMobile ? 3000 : 800);
+        };
 
-  const onVisibilityChange = () => {
-    if (document.visibilityState === "visible") {
-      setTimeout(cleanup, 500);
-    }
-  };
+        const onVisibilityChange = () => {
+            if (document.visibilityState === "visible") {
+                setTimeout(cleanup, 800);
+            }
+        };
 
-  window.addEventListener("afterprint", onAfterPrint, { once: true });
-  document.addEventListener("visibilitychange", onVisibilityChange);
+        window.addEventListener("afterprint", onAfterPrint);
+        document.addEventListener("visibilitychange", onVisibilityChange);
 
-  try {
-    // Wait for layout/fonts so print rendering is stable on mobile
-    if (document.fonts?.ready) {
-      await document.fonts.ready.catch(() => {});
-    }
+        try {
+            if (document.fonts?.ready) {
+                await document.fonts.ready.catch(() => { });
+            }
 
-    await new Promise((resolve) =>
-      requestAnimationFrame(() => requestAnimationFrame(resolve))
-    );
+            await new Promise((resolve) =>
+                requestAnimationFrame(() => requestAnimationFrame(resolve))
+            );
 
-    printRoot.style.visibility = "visible";
-    window.print();
-  } finally {
-    // Final fallback cleanup, but not too early
-    setTimeout(cleanup, isMobile ? 8000 : 3000);
-  }
-};
+            if (isMobile) {
+                await new Promise((resolve) => setTimeout(resolve, 500));
+            }
 
-    
+            window.print();
+        } finally {
+            setTimeout(cleanup, isMobile ? 12000 : 4000);
+        }
+    };
+
+
     /* =========================
        LOADING
     ========================= */
